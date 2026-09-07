@@ -1,0 +1,5 @@
+{
+  "name": "croco2",
+  "main": "party/index.ts",
+  "compatibilityDate": "2025-01-01"
+}
