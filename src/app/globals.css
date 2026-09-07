@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+:root {
+  --sand: #F6EFDD; --sand-deep: #EDE2C6; --ink: #20301F; --ink-soft: #4E5D45;
+  --card: #FFFFFF; --card-edge: #E4D9BC;
+  --croc: #4CAF50; --croc-deep: #2E7D32; --croc-shadow: #1B5E20; --croc-light: #7FCB84;
+  --mouth: #D32F2F; --mouth-deep: #A31E1E;
+  --tooth: #FBFAF4; --tooth-edge: #CFC7A8;
+  --claw: #FDCB3A; --claw-edge: #D9A61B;
+  --turn-on: #2E9E44; --turn-on-deep: #1F7A31;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sand: #141A11; --sand-deep: #0E120C; --ink: #EDE7D6; --ink-soft: #B7B199;
+    --card: #1E2619; --card-edge: #33402B;
+  }
+}
+
+:root[data-theme="dark"] {
+  --sand: #141A11; --sand-deep: #0E120C; --ink: #EDE7D6; --ink-soft: #B7B199;
+  --card: #1E2619; --card-edge: #33402B;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--sand);
+  color: var(--ink);
+  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+h1, .display {
+  font-family: "Fredoka", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Crocodile tooth click interaction: sink, fade, turn gold — only ever on .pressed, never at rest */
+.crocodile-stage svg .tooth {
+  fill: var(--tooth);
+  cursor: default;
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.32s ease, fill 0.12s ease;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+.crocodile-stage svg .tooth.interactive {
+  cursor: pointer;
+}
+.crocodile-stage svg .tooth.pressed {
+  transform: translateY(46px);
+  opacity: 0;
+  fill: var(--claw);
+}
