@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useGameRoom } from "@/hooks/useGameRoom";
 import { CrocodileSVG } from "@/components/CrocodileSVG";
@@ -13,6 +14,18 @@ function GameRoom() {
   const searchParams = useSearchParams();
   const roomId = searchParams.get("room") ?? "";
   const [chatOpen, setChatOpen] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const copyInviteLink = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      window.prompt("Copy this link:", url);
+      return;
+    }
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
 
   const { yourId, gameState, snapped, roomFull, pressTooth, sendChat, sendEmoji, playAgain } =
     useGameRoom(roomId);
@@ -24,9 +37,9 @@ function GameRoom() {
           <div className="text-6xl mb-4">🐊</div>
           <p style={{ color: "var(--ink-soft)" }}>
             No room ID.{" "}
-            <a href="/" className="underline" style={{ color: "var(--croc-deep)" }}>
+            <Link href="/" className="underline" style={{ color: "var(--croc-deep)" }}>
               Go home
-            </a>
+            </Link>
           </p>
         </div>
       </main>
@@ -55,11 +68,16 @@ function GameRoom() {
       <div className="flex items-center justify-between px-4 py-3 text-sm font-bold" style={{ color: "var(--ink-soft)" }}>
         <span>🐊 Croco 2.0</span>
         <button
-          onClick={() => navigator.clipboard.writeText(inviteUrl)}
-          className="text-xs border rounded-full px-3 py-1.5"
-          style={{ borderColor: "var(--card-edge)", color: "var(--croc-deep)", background: "var(--card)" }}
+          onClick={() => copyInviteLink(inviteUrl)}
+          className="text-xs border rounded-full px-3 py-1.5 transition-colors"
+          style={
+            linkCopied
+              ? { borderColor: "var(--turn-on-deep)", color: "#fff", background: "var(--turn-on)" }
+              : { borderColor: "var(--card-edge)", color: "var(--croc-deep)", background: "var(--card)" }
+          }
+          aria-live="polite"
         >
-          🔗 Copy invite link
+          {linkCopied ? "✅ Copied!" : "🔗 Copy invite link"}
         </button>
       </div>
 
