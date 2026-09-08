@@ -13,6 +13,7 @@ function twoPlayerPlaying(triggerTooth: number): RoomState {
   return {
     players: ["p1", "p2"],
     currentTurn: "p1",
+    starterIndex: 0,
     triggerTooth,
     pressedTeeth: [],
     phase: "playing",
@@ -112,13 +113,14 @@ describe("handlePlayAgain", () => {
     expect(result.playAgainVotes).toContain("p1");
   });
 
-  it("resets game when both players vote; loser goes first", () => {
+  it("resets game when both players vote; other player starts next round", () => {
     let state = handlePlayAgain(endedState(), "p1");
     state = handlePlayAgain(state, "p2");
     expect(state.phase).toBe("playing");
     expect(state.pressedTeeth).toHaveLength(0);
     expect(state.loser).toBeNull();
-    expect(state.currentTurn).toBe("p1");
+    expect(state.starterIndex).toBe(1);
+    expect(state.currentTurn).toBe("p2");
   });
 
   it("ignores duplicate votes from the same player", () => {
@@ -137,16 +139,26 @@ describe("handlePlayAgain", () => {
     expect(results.size).toBeGreaterThan(1);
   });
 
-  it("loser goes first — works when loser is p2", () => {
-    const state: RoomState = {
+  it("starter alternates on each restart regardless of who lost", () => {
+    const stateP2Lost: RoomState = {
       ...twoPlayerPlaying(5),
       phase: "ended",
       loser: "p2",
       pressedTeeth: [0],
     };
-    let s = handlePlayAgain(state, "p1");
+    let s = handlePlayAgain(stateP2Lost, "p1");
     s = handlePlayAgain(s, "p2");
-    expect(s.currentTurn).toBe("p2");
+    expect(s.currentTurn).toBe("p2"); // round 2: p2 starts (alternated from p1), not p1 despite p1 winning
+
+    s = { ...s, phase: "ended", loser: "p1" };
+    s = handlePlayAgain(s, "p1");
+    s = handlePlayAgain(s, "p2");
+    expect(s.currentTurn).toBe("p1"); // round 3: back to p1
+  });
+
+  it("keeps the same starter for the next round if only one player votes to restart mid-way", () => {
+    const state = handlePlayAgain(endedState(), "p1");
+    expect(state.starterIndex).toBe(0);
   });
 });
 

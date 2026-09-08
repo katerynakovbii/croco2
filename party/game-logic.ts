@@ -3,6 +3,7 @@ import type { ChatMessage, ClientGameState, Phase } from "../src/types/game";
 export interface RoomState {
   players: string[];
   currentTurn: string;
+  starterIndex: 0 | 1;
   triggerTooth: number;
   pressedTeeth: number[];
   phase: Phase;
@@ -16,6 +17,7 @@ export function createInitialState(): RoomState {
   return {
     players: [],
     currentTurn: "",
+    starterIndex: 0,
     triggerTooth: -1,
     pressedTeeth: [],
     phase: "waiting",
@@ -34,7 +36,7 @@ export function addPlayer(state: RoomState, playerId: string): RoomState | "full
       ...state,
       players,
       phase: "playing",
-      currentTurn: players[0],
+      currentTurn: players[state.starterIndex],
       triggerTooth: Math.floor(Math.random() * 12),
       paused: false,
     };
@@ -70,10 +72,12 @@ export function handlePlayAgain(state: RoomState, playerId: string): RoomState {
     : [...state.playAgainVotes, playerId];
 
   if (votes.length >= 2) {
+    const starterIndex: 0 | 1 = state.starterIndex === 0 ? 1 : 0;
     return {
       ...state,
       phase: "playing",
-      currentTurn: state.loser!,
+      starterIndex,
+      currentTurn: state.players[starterIndex],
       triggerTooth: Math.floor(Math.random() * 12),
       pressedTeeth: [],
       loser: null,
