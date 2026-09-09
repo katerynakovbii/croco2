@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -24,6 +24,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Verify NEXT_PUBLIC_PARTYKIT_HOST is set
+        run: |
+          if [ -z "${{ vars.NEXT_PUBLIC_PARTYKIT_HOST }}" ]; then
+            echo "::error::NEXT_PUBLIC_PARTYKIT_HOST repo variable is not set — the deployed site would be unable to connect to the game server."
+            exit 1
+          fi
+      - run: npm test
       - run: npm run build
         env:
           NEXT_PUBLIC_BASE_PATH: /croco2

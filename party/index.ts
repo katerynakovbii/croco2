@@ -8,12 +8,12 @@ import {
   toClientState,
   type RoomState,
 } from "./game-logic";
-import type { ClientMessage, ServerMessage } from "../src/types/game";
+import { PRESET_EMOJIS, type ClientMessage, type ServerMessage } from "../src/types/game";
 
 export default class GameRoom implements Party.Server {
   private state: RoomState = createInitialState();
-  private disconnectedPlayerId: string | null = null;
-  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private disconnectedPlayerIds = new Set<string>();
+  private reconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   constructor(readonly room: Party.Room) {}
 
@@ -21,12 +21,13 @@ export default class GameRoom implements Party.Server {
     const joinedMsg: ServerMessage = { type: "joined", yourId: conn.id };
     conn.send(JSON.stringify(joinedMsg));
 
-    if (this.disconnectedPlayerId !== null) {
-      const oldId = this.disconnectedPlayerId;
-      this.disconnectedPlayerId = null;
-      if (this.reconnectTimer) {
-        clearTimeout(this.reconnectTimer);
-        this.reconnectTimer = null;
+    if (this.disconnectedPlayerIds.size > 0) {
+      const oldId = this.disconnectedPlayerIds.values().next().value!;
+      this.disconnectedPlayerIds.delete(oldId);
+      const timer = this.reconnectTimers.get(oldId);
+      if (timer) {
+        clearTimeout(timer);
+        this.reconnectTimers.delete(oldId);
       }
       this.state = {
         ...this.state,
@@ -34,7 +35,7 @@ export default class GameRoom implements Party.Server {
         currentTurn: this.state.currentTurn === oldId ? conn.id : this.state.currentTurn,
         loser: this.state.loser === oldId ? conn.id : this.state.loser,
         playAgainVotes: this.state.playAgainVotes.map((p) => (p === oldId ? conn.id : p)),
-        paused: false,
+        paused: this.disconnectedPlayerIds.size > 0,
       };
       this.broadcast({ type: "partnerRejoined" });
       this.broadcastState();
@@ -74,11 +75,15 @@ export default class GameRoom implements Party.Server {
         break;
       }
       case "chat": {
-        this.state = addChatMessage(this.state, sender.id, Date.now(), msg.text, undefined);
+        if (typeof msg.text !== "string") return;
+        const text = msg.text.trim().slice(0, 200);
+        if (!text) return;
+        this.state = addChatMessage(this.state, sender.id, Date.now(), text, undefined);
         this.broadcastState();
         break;
       }
       case "emoji": {
+        if (!(PRESET_EMOJIS as readonly string[]).includes(msg.emoji)) return;
         this.state = addChatMessage(this.state, sender.id, Date.now(), undefined, msg.emoji);
         this.broadcastState();
         break;
@@ -94,21 +99,28 @@ export default class GameRoom implements Party.Server {
   onClose(conn: Party.Connection) {
     if (!this.state.players.includes(conn.id)) return;
 
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-
-    this.disconnectedPlayerId = conn.id;
+    this.disconnectedPlayerIds.add(conn.id);
     this.state = { ...this.state, paused: true };
     this.broadcast({ type: "partnerLeft" });
 
-    this.reconnectTimer = setTimeout(() => {
-      this.state = createInitialState();
-      this.disconnectedPlayerId = null;
-      this.reconnectTimer = null;
+    const timer = setTimeout(() => {
+      this.reconnectTimers.delete(conn.id);
+      if (!this.disconnectedPlayerIds.has(conn.id)) return; // already reconnected
+
+      for (const t of this.reconnectTimers.values()) clearTimeout(t);
+      this.reconnectTimers.clear();
+      this.disconnectedPlayerIds.clear();
+
+      const stillConnected = [...this.room.getConnections()].map((c) => c.id);
+      let fresh = createInitialState();
+      for (const id of stillConnected) {
+        const result = addPlayer(fresh, id);
+        if (result !== "full") fresh = result;
+      }
+      this.state = fresh;
       this.broadcastState();
     }, 60_000);
+    this.reconnectTimers.set(conn.id, timer);
   }
 
   private broadcastState() {

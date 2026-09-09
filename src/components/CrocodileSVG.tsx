@@ -114,7 +114,15 @@ export function CrocodileSVG({ pressedTeeth, isMyTurn, phase, snapped, paused, o
                 stroke="var(--tooth-edge)"
                 strokeWidth={2}
                 onClick={() => canPress && onPressTooth(i)}
+                onKeyDown={(e) => {
+                  if (!canPress) return;
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onPressTooth(i);
+                  }
+                }}
                 role={canPress ? "button" : undefined}
+                tabIndex={canPress ? 0 : -1}
                 aria-label={canPress ? `Press tooth ${i + 1}` : undefined}
               />
             );

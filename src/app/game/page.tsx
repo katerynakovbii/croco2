@@ -27,8 +27,25 @@ function GameRoom() {
     setTimeout(() => setLinkCopied(false), 2000);
   };
 
-  const { yourId, gameState, snapped, roomFull, pressTooth, sendChat, sendEmoji, playAgain } =
+  const { yourId, gameState, snapped, roomFull, configError, pressTooth, sendChat, sendEmoji, playAgain } =
     useGameRoom(roomId);
+
+  if (configError) {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-8" style={{ background: "var(--sand)" }}>
+        <div className="text-center max-w-sm">
+          <div className="text-6xl mb-4">🐊</div>
+          <h1 className="text-xl font-bold mb-2" style={{ color: "var(--ink)" }}>
+            Server not configured
+          </h1>
+          <p style={{ color: "var(--ink-soft)" }}>
+            This deployment is missing its game-server address. Set{" "}
+            <code>NEXT_PUBLIC_PARTYKIT_HOST</code> and redeploy.
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   if (!roomId) {
     return (
@@ -66,7 +83,9 @@ function GameRoom() {
   return (
     <main className="min-h-screen flex flex-col" style={{ background: "var(--sand)" }}>
       <div className="flex items-center justify-between px-4 py-3 text-sm font-bold" style={{ color: "var(--ink-soft)" }}>
-        <span>🐊 Croco 2.0</span>
+        <span>
+          🐊 Croco 2.0 <span style={{ color: "var(--ink-soft)", fontWeight: 400 }}>· {roomId}</span>
+        </span>
         <button
           onClick={() => copyInviteLink(inviteUrl)}
           className="text-xs border rounded-full px-3 py-1.5 transition-colors"

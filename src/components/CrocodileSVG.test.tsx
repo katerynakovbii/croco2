@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { CrocodileSVG } from "./CrocodileSVG";
 
 describe("CrocodileSVG", () => {
@@ -34,7 +34,7 @@ describe("CrocodileSVG", () => {
     expect(teeth[3].classList.contains("interactive")).toBe(false);
   });
 
-  it("calls onPressTooth with the tooth index when an interactive tooth is clicked", async () => {
+  it("calls onPressTooth with the tooth index when an interactive tooth is clicked", () => {
     const onPressTooth = vi.fn();
     render(
       <CrocodileSVG

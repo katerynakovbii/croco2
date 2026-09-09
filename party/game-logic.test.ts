@@ -76,9 +76,15 @@ describe("handlePress", () => {
     expect(handlePress(state, "p1", 3)).toBe("already-pressed");
   });
 
-  it("returns state unchanged when game is paused", () => {
+  it("returns 'not-playing' when game is paused", () => {
     const state = { ...twoPlayerPlaying(5), paused: true };
-    expect(handlePress(state, "p1", 0)).toEqual(state);
+    expect(handlePress(state, "p1", 0)).toBe("not-playing");
+  });
+
+  it("returns 'invalid-tooth' for an out-of-range tooth index", () => {
+    expect(handlePress(twoPlayerPlaying(5), "p1", 12)).toBe("invalid-tooth");
+    expect(handlePress(twoPlayerPlaying(5), "p1", -1)).toBe("invalid-tooth");
+    expect(handlePress(twoPlayerPlaying(5), "p1", 1.5)).toBe("invalid-tooth");
   });
 
   it("alternates turn on safe tooth press", () => {

@@ -48,9 +48,10 @@ export function handlePress(
   state: RoomState,
   playerId: string,
   toothIndex: number
-): RoomState | "wrong-turn" | "already-pressed" {
-  if (state.phase !== "playing" || state.paused) return state;
+): RoomState | "not-playing" | "wrong-turn" | "invalid-tooth" | "already-pressed" {
+  if (state.phase !== "playing" || state.paused) return "not-playing";
   if (state.currentTurn !== playerId) return "wrong-turn";
+  if (!Number.isInteger(toothIndex) || toothIndex < 0 || toothIndex > 11) return "invalid-tooth";
   if (state.pressedTeeth.includes(toothIndex)) return "already-pressed";
 
   if (toothIndex === state.triggerTooth) {

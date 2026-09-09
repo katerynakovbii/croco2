@@ -1,5 +1,7 @@
 export type Phase = "waiting" | "playing" | "ended";
 
+export const PRESET_EMOJIS = ["😄", "😱", "😬", "💀", "😂", "🐊", "❤️", "😤"] as const;
+
 export interface ChatMessage {
   from: string;
   text?: string;

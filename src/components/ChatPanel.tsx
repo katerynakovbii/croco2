@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ChatMessage } from "@/types/game";
-
-const PRESET_EMOJIS = ["😄", "😱", "😬", "💀", "😂", "🐊", "❤️", "😤"];
+import { PRESET_EMOJIS, type ChatMessage } from "@/types/game";
 
 interface Props {
   messages: ChatMessage[];
@@ -41,7 +39,7 @@ export function ChatPanel({ messages, yourId, onSendChat, onSendEmoji }: Props) 
         {messages.map((msg, i) => {
           const isMe = msg.from === yourId;
           return (
-            <div key={i} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+            <div key={`${msg.from}-${msg.ts}-${i}`} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
               <div
                 className={`max-w-[80%] px-3 py-1.5 rounded-2xl text-sm ${msg.emoji ? "text-2xl px-1" : ""}`}
                 style={
