@@ -48,6 +48,11 @@ h1, .display {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  outline: none;
+}
+.crocodile-stage svg .tooth.interactive:focus-visible {
+  outline: 2px solid var(--croc-deep);
+  outline-offset: 2px;
 }
 .crocodile-stage svg .tooth.pressed {
   transform: translateY(46px);
