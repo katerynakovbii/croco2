@@ -1,7 +1,7 @@
 "use client";
 
 import usePartySocket from "partysocket/react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { ClientGameState, ServerMessage } from "@/types/game";
 
 const PARTYKIT_HOST = process.env.NEXT_PUBLIC_PARTYKIT_HOST;
@@ -12,12 +12,6 @@ export function useGameRoom(roomId: string) {
   const [snapped, setSnapped] = useState(false);
   const [roomFull, setRoomFull] = useState(false);
   const configError = !PARTYKIT_HOST;
-
-  useEffect(() => {
-    if (gameState?.phase === "playing" && snapped) {
-      setSnapped(false);
-    }
-  }, [gameState?.phase, snapped]);
 
   const socket = usePartySocket({
     host: PARTYKIT_HOST ?? "",

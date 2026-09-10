@@ -46,6 +46,8 @@ h1, .display {
 }
 .crocodile-stage svg .tooth.interactive {
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .crocodile-stage svg .tooth.pressed {
   transform: translateY(46px);
