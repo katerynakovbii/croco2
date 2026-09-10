@@ -40,7 +40,7 @@ h1, .display {
 .crocodile-stage svg .tooth {
   fill: var(--tooth);
   cursor: default;
-  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.32s ease, fill 0.12s ease;
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.32s ease, fill 0.32s ease, stroke 0.32s ease;
   transform-box: fill-box;
   transform-origin: 50% 100%;
 }
@@ -51,4 +51,5 @@ h1, .display {
   transform: translateY(46px);
   opacity: 0;
   fill: var(--claw);
+  stroke: var(--claw-edge);
 }

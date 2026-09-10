@@ -8,13 +8,17 @@ import { CrocodileSVG } from "@/components/CrocodileSVG";
 import { TurnIndicator } from "@/components/TurnIndicator";
 import { ChatPanel } from "@/components/ChatPanel";
 import { GameOverOverlay } from "@/components/GameOverOverlay";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+// keep in sync with CrocodileSVG's jaw-close transition duration
+const SNAP_ANIMATION_MS = 420;
 
 function GameRoom() {
   const searchParams = useSearchParams();
   const roomId = searchParams.get("room") ?? "";
   const [chatOpen, setChatOpen] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(false);
 
   const copyInviteLink = async (url: string) => {
     try {
@@ -29,6 +33,15 @@ function GameRoom() {
 
   const { yourId, gameState, snapped, roomFull, configError, pressTooth, sendChat, sendEmoji, playAgain } =
     useGameRoom(roomId);
+
+  useEffect(() => {
+    if (gameState?.phase !== "ended") {
+      setShowOverlay(false);
+      return;
+    }
+    const timer = setTimeout(() => setShowOverlay(true), SNAP_ANIMATION_MS);
+    return () => clearTimeout(timer);
+  }, [gameState?.phase]);
 
   if (configError) {
     return (
@@ -122,7 +135,7 @@ function GameRoom() {
             Connecting...
           </p>
         )}
-        {gameState?.phase === "ended" && (
+        {showOverlay && (
           <GameOverOverlay
             loser={gameState.loser}
             yourId={yourId}
