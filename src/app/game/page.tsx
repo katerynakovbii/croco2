@@ -135,7 +135,7 @@ function GameRoom() {
             Connecting...
           </p>
         )}
-        {showOverlay && (
+        {showOverlay && gameState && (
           <GameOverOverlay
             loser={gameState.loser}
             yourId={yourId}
