@@ -113,12 +113,17 @@ export function CrocodileSVG({ pressedTeeth, isMyTurn, phase, snapped, paused, o
                 className={cls}
                 stroke="var(--tooth-edge)"
                 strokeWidth={2}
-                onClick={() => canPress && onPressTooth(i)}
+                onClick={(e) => {
+                  if (!canPress) return;
+                  onPressTooth(i);
+                  e.currentTarget.blur();
+                }}
                 onKeyDown={(e) => {
                   if (!canPress) return;
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     onPressTooth(i);
+                    e.currentTarget.blur();
                   }
                 }}
                 role={canPress ? "button" : undefined}
