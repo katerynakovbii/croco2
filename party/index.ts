@@ -1,4 +1,4 @@
-import type * as Party from "partykit/server";
+import { routePartykitRequest, Server, type Connection } from "partyserver";
 import {
   createInitialState,
   addPlayer,
@@ -10,14 +10,15 @@ import {
 } from "./game-logic";
 import { PRESET_EMOJIS, type ClientMessage, type ServerMessage } from "../src/types/game";
 
-export default class GameRoom implements Party.Server {
+type Env = { Main: DurableObjectNamespace<GameRoom> };
+
+// Hibernation stays off (the default): room state and reconnect timers live in memory.
+export class GameRoom extends Server<Env> {
   private state: RoomState = createInitialState();
   private disconnectedPlayerIds = new Set<string>();
   private reconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
-  constructor(readonly room: Party.Room) {}
-
-  onConnect(conn: Party.Connection) {
+  onConnect(conn: Connection) {
     const joinedMsg: ServerMessage = { type: "joined", yourId: conn.id };
     conn.send(JSON.stringify(joinedMsg));
 
@@ -37,7 +38,7 @@ export default class GameRoom implements Party.Server {
         playAgainVotes: this.state.playAgainVotes.map((p) => (p === oldId ? conn.id : p)),
         paused: this.disconnectedPlayerIds.size > 0,
       };
-      this.broadcast({ type: "partnerRejoined" });
+      this.send({ type: "partnerRejoined" });
       this.broadcastState();
       return;
     }
@@ -54,7 +55,8 @@ export default class GameRoom implements Party.Server {
     this.broadcastState();
   }
 
-  onMessage(message: string, sender: Party.Connection) {
+  onMessage(sender: Connection, message: string | ArrayBuffer | ArrayBufferView) {
+    if (typeof message !== "string") return;
     let msg: ClientMessage;
     try {
       msg = JSON.parse(message) as ClientMessage;
@@ -69,7 +71,7 @@ export default class GameRoom implements Party.Server {
         const wasPlaying = this.state.phase === "playing";
         this.state = result;
         if (wasPlaying && this.state.phase === "ended") {
-          this.broadcast({ type: "snap", loser: this.state.loser! });
+          this.send({ type: "snap", loser: this.state.loser! });
         }
         this.broadcastState();
         break;
@@ -96,12 +98,12 @@ export default class GameRoom implements Party.Server {
     }
   }
 
-  onClose(conn: Party.Connection) {
+  onClose(conn: Connection) {
     if (!this.state.players.includes(conn.id)) return;
 
     this.disconnectedPlayerIds.add(conn.id);
     this.state = { ...this.state, paused: true };
-    this.broadcast({ type: "partnerLeft" });
+    this.send({ type: "partnerLeft" });
 
     const timer = setTimeout(() => {
       this.reconnectTimers.delete(conn.id);
@@ -111,7 +113,7 @@ export default class GameRoom implements Party.Server {
       this.reconnectTimers.clear();
       this.disconnectedPlayerIds.clear();
 
-      const stillConnected = [...this.room.getConnections()].map((c) => c.id);
+      const stillConnected = [...this.getConnections()].map((c) => c.id);
       let fresh = createInitialState();
       for (const id of stillConnected) {
         const result = addPlayer(fresh, id);
@@ -124,11 +126,20 @@ export default class GameRoom implements Party.Server {
   }
 
   private broadcastState() {
-    const msg: ServerMessage = { type: "state", state: toClientState(this.state) };
-    this.room.broadcast(JSON.stringify(msg));
+    this.send({ type: "state", state: toClientState(this.state) });
   }
 
-  private broadcast(msg: ServerMessage) {
-    this.room.broadcast(JSON.stringify(msg));
+  // Named `send` because `Server` already defines `broadcast(msg: string)`.
+  private send(msg: ServerMessage) {
+    this.broadcast(JSON.stringify(msg));
   }
 }
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    return (
+      (await routePartykitRequest(request, env)) ||
+      new Response("Not Found", { status: 404 })
+    );
+  },
+} satisfies ExportedHandler<Env>;
